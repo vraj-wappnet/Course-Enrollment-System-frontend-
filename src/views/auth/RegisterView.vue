@@ -1,70 +1,84 @@
 <script setup lang="ts">
-import { ref } from "vue";
-import { useRouter } from "vue-router";
-import { useAuthStore } from "../../stores/auth";
+import { ref, reactive } from 'vue'
+import { useRouter } from 'vue-router'
+import { registerSchema } from '../../utils/validation'
+import * as Yup from 'yup'
+import { apiService } from '../../api/apiService'
 
-const router = useRouter();
-const authStore = useAuthStore();
+const router = useRouter()
 
-const name = ref("");
-const email = ref("");
-const password = ref("");
-const passwordConfirm = ref("");
-const error = ref("");
-const isLoading = ref(false);
+const name = ref('')
+const email = ref('')
+const password = ref('')
+const passwordConfirm = ref('')
+const isLoading = ref(false)
+const error = ref('') // <-- Added to handle general error messages
+
+const errors = reactive({
+  name: '',
+  email: '',
+  password: '',
+  passwordConfirm: '',
+})
 
 async function handleRegister() {
-  if (
-    !name.value ||
-    !email.value ||
-    !password.value ||
-    !passwordConfirm.value
-  ) {
-    error.value = "Please fill in all fields";
-    return;
-  }
-
-  if (password.value !== passwordConfirm.value) {
-    error.value = "Passwords do not match";
-    return;
-  }
-
-  if (password.value.length < 6) {
-    error.value = "Password must be at least 6 characters long";
-    return;
-  }
-
   try {
-    isLoading.value = true;
-    error.value = "";
+    isLoading.value = true
+    error.value = '' // <-- Reset error
+    errors.name = ''
+    errors.email = ''
+    errors.password = ''
+    errors.passwordConfirm = ''
 
-    await authStore.register(name.value, email.value, password.value);
-    router.push("/dashboard");
+    // Validate form data using Yup schema
+    await registerSchema.validate({
+      name: name.value,
+      email: email.value,
+      password: password.value,
+      passwordConfirm: passwordConfirm.value,
+    }, { abortEarly: false })
+
+    // Prepare data for API call
+    const registerData = {
+      email: email.value,
+      name: name.value,
+      password: password.value,
+    }
+
+    // Make API call to register endpoint
+    await apiService.post('auth/register', registerData)
+
+    // Redirect to dashboard on successful registration
+    router.push('/dashboard')
   } catch (err: any) {
-    error.value = err.message || "Registration failed";
+    if (err instanceof Yup.ValidationError) {
+      // Map validation errors to specific fields
+      err.inner.forEach((errorItem: any) => {
+        if (errorItem.path && errors.hasOwnProperty(errorItem.path)) {
+          errors[errorItem.path as keyof typeof errors] = errorItem.message
+        }
+      })
+    } else {
+      // Handle API errors
+      error.value = err.message || 'Registration failed'
+    }
   } finally {
-    isLoading.value = false;
+    isLoading.value = false
   }
 }
 </script>
 
+
 <template>
-  <div
-    class="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 py-12 px-4 sm:px-6 lg:px-8"
-  >
-    <div
-      class="max-w-md w-full space-y-8 bg-white/30 backdrop-blur-lg rounded-2xl shadow-xl p-8 border border-white/20"
-    >
+  <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-md w-full space-y-8 bg-white/30 backdrop-blur-lg rounded-2xl shadow-xl p-8 border border-white/20">
       <div>
         <h3 class="text-center text-4xl font-bold tracking-tight text-gray-900">
           Create a New Account
         </h3>
       </div>
       <transition name="fade">
-        <div
-          v-if="error"
-          class="bg-red-50 border-l-4 border-red-500 text-red-700 px-4 py-3 rounded-lg shadow-sm"
-        >
+        <div v-if="error" class="bg-red-50 border-l-4 border-red-500 text-red-700 px-4 py-3 rounded-lg shadow-sm">
           {{ error }}
         </div>
       </transition>
@@ -72,11 +86,7 @@ async function handleRegister() {
       <form class="mt-8 space-y-6" @submit.prevent="handleRegister">
         <div class="space-y-4">
           <div>
-            <label
-              for="name"
-              class="block text-sm font-medium text-gray-700 mb-1"
-              >Full Name</label
-            >
+            <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
             <input
               id="name"
               name="name"
@@ -89,11 +99,7 @@ async function handleRegister() {
             />
           </div>
           <div>
-            <label
-              for="email-address"
-              class="block text-sm font-medium text-gray-700 mb-1"
-              >Email address</label
-            >
+            <label for="email-address" class="block text-sm font-medium text-gray-700 mb-1">Email address</label>
             <input
               id="email-address"
               name="email"
@@ -106,11 +112,7 @@ async function handleRegister() {
             />
           </div>
           <div>
-            <label
-              for="password"
-              class="block text-sm font-medium text-gray-700 mb-1"
-              >Password</label
-            >
+            <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
             <input
               id="password"
               name="password"
@@ -123,11 +125,7 @@ async function handleRegister() {
             />
           </div>
           <div>
-            <label
-              for="password-confirm"
-              class="block text-sm font-medium text-gray-700 mb-1"
-              >Confirm Password</label
-            >
+            <label for="password-confirm" class="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
             <input
               id="password-confirm"
               name="password-confirm"
@@ -157,7 +155,7 @@ async function handleRegister() {
                 <circle
                   class="opacity-25"
                   cx="12"
-                  cy="12 "
+                  cy="12"
                   r="10"
                   stroke="currentColor"
                   stroke-width="4"

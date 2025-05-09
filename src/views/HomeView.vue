@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import CourseCard from '../components/courses/CourseCard.vue'
 import { useCoursesStore } from '../stores/courses'

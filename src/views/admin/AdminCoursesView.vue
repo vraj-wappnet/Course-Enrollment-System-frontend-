@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { useCoursesStore } from '../../stores/courses'
-import type { Course, EnrollmentStatus } from '../../stores/courses'
+import { useCoursesStore, type EnrollmentStatus } from '../../stores/courses'
 
 const router = useRouter()
 const coursesStore = useCoursesStore()
@@ -12,6 +11,7 @@ const searchQuery = ref('')
 const selectedStatus = ref<EnrollmentStatus | 'All'>('All')
 const sortBy = ref<'title' | 'instructorName' | 'duration'>('title')
 const sortOrder = ref<'asc' | 'desc'>('asc')
+const errorMessage = ref<string | null>(null)
 
 const filteredCourses = computed(() => {
   let result = [...courses.value]
@@ -38,7 +38,7 @@ const filteredCourses = computed(() => {
     
     if (typeof valueA === 'string') {
       valueA = valueA.toLowerCase()
-      valueB = valueB.toLowerCase()
+      valueB = typeof valueB === 'string' ? valueB.toLowerCase() : valueB
     }
     
     if (valueA < valueB) return sortOrder.value === 'asc' ? -1 : 1
@@ -57,13 +57,21 @@ function createCourse() {
   router.push('/admin/courses/new')
 }
 
-function editCourse(id: number) {
+function editCourse(id: string) {
   router.push(`/admin/courses/${id}`)
 }
 
-function confirmDelete(id: number) {
+async function confirmDelete(id: string) {
   if (confirm('Are you sure you want to delete this course? This action cannot be undone.')) {
-    coursesStore.deleteCourse(id)
+    try {
+      errorMessage.value = null
+      await coursesStore.deleteCourse(id)
+    } catch (error: any) {
+      console.error('Failed to delete course:', error)
+      errorMessage.value = error.status === 401
+        ? 'Session expired. Please log in again.'
+        : error.message || 'Failed to delete course.'
+    }
   }
 }
 </script>
