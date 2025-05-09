@@ -12,6 +12,9 @@ import EnrolledCoursesView from '../views/courses/EnrolledCoursesView.vue'
 import AdminDashboardView from '../views/admin/AdminDashboardView.vue'
 import AdminCoursesView from '../views/admin/AdminCoursesView.vue'
 import AdminCourseFormView from '../views/admin/AdminCourseFormView.vue'
+import ForgotPassword from '../views/auth/ForgotPassword.vue'
+import VerifyOtp from '../views/auth/VerifyOtp.vue'
+import ResetPassword from '../views/auth/ResetPassword.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -27,6 +30,21 @@ const router = createRouter({
       name: 'login',
       component: LoginView,
       meta: { requiresAuth: false, hideForAuth: true }
+    },
+    {
+      path: '/forgot-password',
+      name: 'ForgotPassword',
+      component: ForgotPassword,
+    },
+    {
+      path: '/verify-otp',
+      name: 'VerifyOTP',
+      component: VerifyOtp,
+    },
+    {
+      path: '/reset-password',
+      name: 'ResetPassword',
+      component: ResetPassword,
     },
     {
       path: '/register',

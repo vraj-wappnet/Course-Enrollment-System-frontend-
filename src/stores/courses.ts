@@ -9,7 +9,7 @@ export interface Course {
   id: string;
   title: string;
   instructorName: string;
-  duration: number; // in hours
+  duration: number;
   enrollmentStatus: EnrollmentStatus;
   description: string;
   imageUrl?: string;
@@ -232,6 +232,52 @@ export const useCoursesStore = defineStore(
       }
     }
 
+    async function enrollInCourseAPI(courseId: string, userId: string) {
+      try {
+        const token = authStore.user?.access_token;
+        if (!token) {
+          throw new Error("No access token available. Please log in.");
+        }
+
+        const response = await apiService.post<{
+          message: string;
+          enrollment: {
+            id: number;
+            userId: string;
+            courseId: string;
+            progress: number;
+            enrolledAt: string;
+          };
+        }>("/enrollments", { courseId, userId });
+
+        const newEnrollment: Enrollment = {
+          id: response.data.enrollment.id,
+          userId: parseInt(userId),
+          courseId: response.data.enrollment.courseId,
+          progress: response.data.enrollment.progress,
+          enrolledAt: new Date(response.data.enrollment.enrolledAt),
+        };
+
+        enrollments.value.push(newEnrollment);
+        errorMessage.value = null;
+        return {
+          message: response.data.message || "Enrolled successfully.",
+          enrollment: newEnrollment,
+        };
+      } catch (error: any) {
+        console.error("Failed to enroll in course:", error);
+        if (error.status === 401) {
+          errorMessage.value = "Session expired. Please log in again.";
+          authStore.logout();
+        } else if (error.status === 400) {
+          errorMessage.value = "You are already enrolled in this course.";
+        } else {
+          errorMessage.value = error.message || "Failed to enroll in course.";
+        }
+        throw error;
+      }
+    }
+
     if (authStore.isAuthenticated) {
       fetchCourses();
     }
@@ -305,7 +351,10 @@ export const useCoursesStore = defineStore(
             enrolledAt: enrollment.enrolledAt,
           };
         })
-        .filter((course) => course !== null);
+        .filter((course) => course !== null) as (Course & {
+        progress: number;
+        enrolledAt: Date;
+      })[];
     }
 
     const openCourses = computed(() => {
@@ -336,6 +385,7 @@ export const useCoursesStore = defineStore(
       updateCourse,
       deleteCourse,
       enrollInCourse,
+      enrollInCourseAPI,
       updateProgress,
       getEnrollmentForUserAndCourse,
       getEnrolledCoursesForUser,

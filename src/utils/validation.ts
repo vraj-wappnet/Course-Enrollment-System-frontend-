@@ -1,25 +1,42 @@
-import * as Yup from 'yup';
+import * as Yup from "yup";
 
 export const loginSchema = Yup.object().shape({
   email: Yup.string()
-    .email('Please enter a valid email address')
-    .required('Email is required'),
+    .email("Please enter a valid email address")
+    .required("Email is required"),
   password: Yup.string()
-    .min(6, 'Password must be at least 6 characters long')
-    .required('Password is required'),
+    .min(6, "Password must be at least 6 characters long")
+    .required("Password is required"),
 });
 
 export const registerSchema = Yup.object().shape({
   name: Yup.string()
-    .min(2, 'Name must be at least 2 characters long')
-    .required('Full name is required'),
+    .min(2, "Name must be at least 2 characters long")
+    .required("Full name is required"),
   email: Yup.string()
-    .email('Please enter a valid email address')
-    .required('Email is required'),
+    .email("Please enter a valid email address")
+    .required("Email is required"),
   password: Yup.string()
-    .min(6, 'Password must be at least 6 characters long')
-    .required('Password is required'),
+    .min(6, "Password must be at least 6 characters long")
+    .required("Password is required"),
   passwordConfirm: Yup.string()
-    .oneOf([Yup.ref('password')], 'Passwords must match')
-    .required('Please confirm your password'),
+    .oneOf([Yup.ref("password")], "Passwords must match")
+    .required("Please confirm your password"),
+});
+
+export const forgotPasswordSchema = Yup.object().shape({
+  email: Yup.string()
+    .email("Invalid email address")
+    .required("Email is required"),
+});
+
+export const otpSchema = Yup.object().shape({
+  otp: Yup.string()
+    .required("OTP is required"),
+});
+
+export const resetPasswordSchema = Yup.object().shape({
+  newPassword: Yup.string()
+    .min(6, "Password must be at least 6 characters")
+    .required("New password is required"),
 });

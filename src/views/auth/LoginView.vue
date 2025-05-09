@@ -1,73 +1,61 @@
 <script setup lang="ts">
-import { ref, reactive } from "vue";
-import { useRouter } from "vue-router";
-import { useAuthStore } from "../../stores/auth";
-import { loginSchema } from "../../utils/validation";
-import * as Yup from "yup";
-import { apiService } from "../../api/apiService";
+import { ref, reactive } from 'vue'
+import { useRouter } from 'vue-router'
+import { useAuthStore } from '../../stores/auth'
+import { loginSchema } from '../../utils/validation'
+import * as Yup from 'yup'
+import { apiService } from '../../api/apiService'
 
-const router = useRouter();
-const authStore = useAuthStore();
+const router = useRouter()
+const authStore = useAuthStore()
 
-const email = ref("");
-const password = ref("");
-const isLoading = ref(false);
+const email = ref('')
+const password = ref('')
+const isLoading = ref(false)
 const errors = reactive({
-  email: "",
-  password: "",
-});
+  email: '',
+  password: '',
+})
 
 async function handleLogin() {
   try {
-    isLoading.value = true;
-    // Clear previous errors
-    errors.email = "";
-    errors.password = "";
+    isLoading.value = true
+    errors.email = ''
+    errors.password = ''
 
-    // Validate form data using Yup schema
     await loginSchema.validate(
-      {
-        email: email.value,
-        password: password.value,
-      },
+      { email: email.value, password: password.value },
       { abortEarly: false }
-    );
+    )
 
-    // Prepare data for API call
     const loginData = {
       email: email.value,
       password: password.value,
-    };
+    }
 
-    // Make API call to login endpoint
     const response = await apiService.post<{
-      access_token: string;
-      refresh_token: string;
-      user_id: string;
-      email: string;
-      name: string;
-      role: "admin" | "user";
-    }>("/auth/login", loginData);
+      access_token: string
+      refresh_token: string
+      user_id: string
+      email: string
+      name: string
+      role: 'admin' | 'user'
+    }>('/auth/login', loginData)
 
-    // Update auth store with the API response
-    await authStore.login(email.value, password.value, response.data);
-
-    // Redirect to dashboard on successful login
-    router.push("/dashboard");
+    await authStore.login(email.value, password.value, response.data)
+    router.push('/dashboard')
   } catch (err: any) {
     if (err instanceof Yup.ValidationError) {
-      // Map validation errors to specific fields
       err.inner.forEach((error: any) => {
         if (error.path && errors.hasOwnProperty(error.path)) {
-          errors[error.path as keyof typeof errors] = error.message;
+          errors[error.path as keyof typeof errors] = error.message
         }
-      });
+      })
     } else {
-      // Handle API errors
-      errors.email = err.message || "Login failed";
+      errors.email = err.message || 'Login failed'
     }
   } finally {
-    isLoading.value = false;
+    isLoading.value = false
   }
 }
 </script>
@@ -146,12 +134,12 @@ async function handleLogin() {
 
         <div class="flex items-center justify-between">
           <div class="text-sm">
-            <a
-              href="#"
+            <router-link
+              to="/forgot-password"
               class="font-medium text-indigo-600 hover:text-indigo-500 transition-colors duration-200"
             >
               Forgot your password?
-            </a>
+            </router-link>
           </div>
         </div>
 
@@ -183,7 +171,7 @@ async function handleLogin() {
                 ></path>
               </svg>
             </span>
-            <span>{{ isLoading ? "Signing in..." : "Sign in" }}</span>
+            <span>{{ isLoading ? 'Signing in...' : 'Sign in' }}</span>
           </button>
         </div>
       </form>
@@ -196,7 +184,6 @@ async function handleLogin() {
 .fade-leave-active {
   transition: opacity 0.3s ease;
 }
-
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
